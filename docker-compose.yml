@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_containter_medods
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "54320:${POSTGRES_PORT}"
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      retries: 3
+      start_period: 10s
+      timeout: 5s
+
+  auth_service_medods:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: medods:latest
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+
+
+volumes:
+  postgres_data:
